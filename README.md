@@ -9,6 +9,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
 | v2.1.0 | [`v2.1.0`](https://github.com/chainguard-actions/skaut-wordpress-version-checker/tree/v2.1.0) | [`28bd379`](https://github.com/skaut/wordpress-version-checker/commit/28bd37905f2a0821195a2daac126aa80912fb747) |
+| v2.2.0 | [`v2.2.0`](https://github.com/chainguard-actions/skaut-wordpress-version-checker/tree/v2.2.0) | [`b67bc31`](https://github.com/skaut/wordpress-version-checker/commit/b67bc31859b82d86eaa0617e4fad63f48ac603a3) |
 
 ## Privacy
 
