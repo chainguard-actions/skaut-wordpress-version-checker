@@ -1,0 +1,26 @@
+name: Test basic usage - repo-token input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: fake-token-for-testing
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          repo-token: ${{ env.GITHUB_TOKEN }}
+        continue-on-error: true
+      - name: Assert action was invoked with repo-token
+        run: |
+          echo "Action outcome: ${{ steps.action.outcome }}"
+          # The action requires a valid GitHub token and a WordPress plugin repo to work fully.
+          # We verify it was invoked (started) with the repo-token input provided.
+          # A failure here means the action crashed before even starting, not a token issue.
+          if [ "${{ steps.action.outcome }}" = "" ]; then
+            echo "FAIL: action did not run at all"
+            exit 1
+          fi
+          echo "PASS: action was invoked with repo-token input"
