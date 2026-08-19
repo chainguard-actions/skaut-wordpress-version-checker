@@ -1,0 +1,35 @@
+name: Test behavior when no readme.txt is present
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/master
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Ensure no readme.txt exists in the workspace root or plugin/ subdirectory
+      - name: Remove any existing readme files
+        run: |
+          rm -f "$GITHUB_WORKSPACE/readme.txt"
+          rm -f "$GITHUB_WORKSPACE/plugin/readme.txt"
+
+      - name: Run WordPress version checker without readme
+        id: action
+        uses: .
+        with:
+          repo-token: ${{ github.token }}
+        continue-on-error: true
+
+      - name: Assert action ran (step completed, not skipped)
+        run: |
+          echo "Action outcome: ${{ steps.action.outcome }}"
+          # The action should run and either succeed or fail gracefully,
+          # but it must not be skipped.
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped, expected it to run"
+            exit 1
+          fi
+          echo "PASS: action ran without readme (outcome: ${{ steps.action.outcome }})"

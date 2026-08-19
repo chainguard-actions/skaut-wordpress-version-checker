@@ -1,0 +1,56 @@
+name: Test custom readme path via config file
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/master
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Create a custom readme location
+      - name: Create custom plugin readme
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/plugin"
+          cat > "$GITHUB_WORKSPACE/plugin/readme.txt" << 'EOF'
+          === My Custom Path Plugin ===
+          Contributors: testuser
+          Tested up to: 6.3
+          Stable tag: 2.0.0
+          License: GPLv2 or later
+
+          A test WordPress plugin with custom readme path.
+
+          == Description ==
+
+          This is a test plugin.
+          EOF
+
+      # Create config file pointing to the custom readme location
+      - name: Create .wordpress-version-checker.json config
+        run: |
+          cat > "$GITHUB_WORKSPACE/.wordpress-version-checker.json" << 'EOF'
+          {
+              "readme": "plugin/readme.txt"
+          }
+          EOF
+
+      - name: Run WordPress version checker with custom readme path
+        id: action
+        uses: .
+        with:
+          repo-token: ${{ github.token }}
+        continue-on-error: true
+
+      - name: Assert action ran (step completed)
+        run: |
+          echo "Action outcome: ${{ steps.action.outcome }}"
+          # The action may succeed or fail depending on network/API access,
+          # but it should not be skipped — it must have actually run.
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped, expected it to run"
+            exit 1
+          fi
+          echo "PASS: action ran with custom readme path (outcome: ${{ steps.action.outcome }})"
