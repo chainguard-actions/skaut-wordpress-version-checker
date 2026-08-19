@@ -1,25 +1,33 @@
-name: Test basic usage - repo-token input
+name: Test basic usage with real token
 on:
   workflow_dispatch:
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: fake-token-for-testing
+    permissions:
+      issues: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: action
+
+      - name: Run WordPress version checker
+        id: action
         uses: .
         with:
-          repo-token: ${{ env.GITHUB_TOKEN }}
+          repo-token: ${{ github.token }}
         continue-on-error: true
-      - name: Assert action was invoked with repo-token
+
+      - name: Assert action completed (not skipped)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
         run: |
-          echo "Action outcome: ${{ steps.action.outcome }}"
-          # The action may fail due to no real GitHub context, but it must have been invoked
-          # with the repo-token input. A missing required input would cause a different error.
-          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
-            echo "FAIL: action was skipped unexpectedly"
+          echo "action outcome: $OUTCOME"
+          # The action reads readme.txt from the repo via GitHub API.
+          # Since this test repo is not a WordPress plugin, the action will
+          # fail with "No readme file was found" — that is the expected behavior.
+          # We assert the step completed (success or failure) but was not skipped.
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action step was skipped unexpectedly"
             exit 1
           fi
-          echo "PASS: action was invoked with repo-token input"
+          echo "PASS: action completed with outcome: $OUTCOME"

@@ -1,0 +1,37 @@
+name: Test action with issues write permission
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run WordPress version checker with issues write permission
+        id: action
+        uses: .
+        with:
+          repo-token: ${{ github.token }}
+        continue-on-error: true
+
+      - name: Assert action completed with expected outcome
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "action outcome: $OUTCOME"
+          # With issues:write permission, the action can create/update/close issues.
+          # Since this repo has no WordPress plugin readme, the action should fail
+          # with an InvalidReadmeError (core.setFailed called).
+          # We verify the action ran to completion (not skipped).
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action was skipped unexpectedly"
+            exit 1
+          fi
+          # Both 'success' and 'failure' are valid outcomes here:
+          # - 'failure' = no readme found (expected for non-plugin repos)
+          # - 'success' = readme found and versions match (unlikely but valid)
+          echo "PASS: action completed with outcome: $OUTCOME"

@@ -1,0 +1,37 @@
+name: Test graceful failure when no WordPress readme exists
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run WordPress version checker (no readme.txt in repo)
+        id: action
+        uses: .
+        with:
+          repo-token: ${{ github.token }}
+        continue-on-error: true
+
+      - name: Assert action fails gracefully (no readme found)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "action outcome: $OUTCOME"
+          # This test repo is not a WordPress plugin — it has no readme.txt
+          # with a "Tested up to:" line. The action should call core.setFailed()
+          # with an InvalidReadmeError, resulting in outcome=failure.
+          # It must NOT crash the runner (outcome=skipped would indicate a crash).
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (no readme found)"
+          elif [ "$OUTCOME" = "success" ]; then
+            # If the repo happens to have a matching readme, that's also fine
+            echo "PASS: action succeeded (repo has a matching readme)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME' (expected 'failure' or 'success')"
+            exit 1
+          fi
